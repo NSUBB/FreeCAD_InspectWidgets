@@ -15,20 +15,16 @@ A request was made in the FreeCAD community to have a sort of Chrome dev tools b
 
 ## Installation
 
-* Open a terminal
-  ```
-  cd ~/.FreeCAD/Mod
-  git clone https://github.com/hyarion/FreeCAD_InspectWidgets
-  ```
+* Open your Macro folder. The path can be found by goin to Macro > Macros... from the main FreeCAD GUI. The folder path is listed at the bottom of the Execute Macro dialog box in the User macros Location.
+* Copy the InspectWidgets.FCmacro file to the Macro folder location.
 * Restart FreeCAD  
-* Activate via `View > Panels > Inspect Widgets`  
+* Activate via `Macro > Macros... > select the InspectWidgets.FCmacro from the User Macros list > Execute.  
 
 ## Usage 
 
-* Make sure  `View > Panels > Inspect Widgets` is activated
-* An 'Inspect Widgets' panel will be visible in the task panel.  
+* An 'Inspect Widgets' docker panel will be visible in the left panel pane.  
 * Press `Inspect` button
-Result: the qss path will be dynamically update under the panel everytime the mouse hovers over an aspect of the interface
+Result: the qss path will be dynamically update as the mouse hovers over an aspect of the interface. Press Shift key to hold the current property and stop the inspection.
 
 ## Developer
 
