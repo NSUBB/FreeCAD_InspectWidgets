@@ -1,0 +1,128 @@
+import FreeCAD
+import FreeCADGui
+from PySide import QtGui, QtCore, QtWidgets
+import os
+
+# Ensure only one instance of the dock widget exists
+def single_instance():
+    """Removes existing InspectWidgets dock before creating a new one."""
+    window = FreeCADGui.getMainWindow()
+    if window:
+        for i in window.findChildren(QtWidgets.QDockWidget):
+            if i.objectName() == "InspectWidgets":
+                i.deleteLater()
+
+single_instance()
+
+# Function to create the dock widget UI manually (replacing dockwidget.ui)
+def create_dock_widget():
+    """Creates the Inspect Widgets dock panel using standard PySide elements."""
+    widget = QtWidgets.QDockWidget("Inspect Widgets")
+    widget.setObjectName("InspectWidgets")
+    container = QtWidgets.QWidget()
+    layout = QtWidgets.QVBoxLayout(container)
+
+    # UI Elements
+    inspect_button = QtWidgets.QPushButton("Inspect")
+    inspect_button.setToolTip("Inspect widgets (can be cancelled by pressing shift)")
+    inspect_button.setCheckable(True)
+
+    identifier_label = QtWidgets.QLabel("")
+    style_sheet_text = QtWidgets.QPlainTextEdit()
+    style_sheet_text.setFont(QtGui.QFont("Courier New"))
+    style_sheet_text.setReadOnly(True)
+
+    path_label = QtWidgets.QLineEdit("")
+    path_label.setReadOnly(True)
+
+    # Add widgets to layout
+    layout.addWidget(inspect_button)
+    layout.addWidget(identifier_label)
+    layout.addWidget(style_sheet_text)
+    layout.addWidget(path_label)
+
+    widget.setWidget(container)
+
+    # Timer for updating widget info
+    timer = QtCore.QTimer(widget)
+
+    def prettify_qss(qss):
+        """Formats QSS stylesheets for better readability."""
+        qss = qss.replace(';', ';\n').replace('{', '{\n').replace('}', '}\n')
+        items = qss.split('\n')
+        items = ['  ' + i if ';' in i else i for i in items]
+        return '\n'.join(items)
+
+    def get_meta_object(w):
+        """Returns the meta-object of a given widget."""
+        return w.metaObject()
+
+    def get_class_name(meta_object):
+        """Extracts the class name from a widget's meta-object."""
+        return meta_object.className().replace('::', '--')
+
+    def sample():
+        """Updates widget information based on cursor position."""
+        try:
+            # Cancel inspection with Shift key
+            if QtWidgets.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier:
+                inspect_button.click()
+
+            w = QtWidgets.QApplication.widgetAt(QtGui.QCursor.pos())
+            if not w:
+                identifier_label.setText("")
+                style_sheet_text.setPlainText("")
+                path_label.setText("")
+                return
+
+            meta_obj = get_meta_object(w)
+            class_name = get_class_name(meta_obj)
+            object_name = w.objectName() if hasattr(w, 'objectName') else ''
+            properties = []
+
+            accessible_name = w.accessibleName()
+            if accessible_name:
+                properties.append(f'accessibleName="{accessible_name}"')
+
+            classes = w.property('class')
+            if classes:
+                properties.append(f'class="{str(classes)}"')
+
+            identifier = class_name + (f'#{object_name}' if object_name else '') + (f'[{", ".join(properties)}]' if properties else '')
+
+            parents = []
+            while meta_obj:
+                parents.append(meta_obj.className().replace('::', '--'))
+                meta_obj = meta_obj.superClass()
+            if parents:
+                identifier += '\n' + ' -> '.join(parents)
+
+            identifier_label.setText(identifier)
+            style_sheet_text.setPlainText(prettify_qss(w.styleSheet()))
+
+            path = []
+            while not w.isTopLevel() and w is not FreeCADGui.getMainWindow():
+                path.append(get_class_name(get_meta_object(w)))
+                w = w.parent()
+            path.reverse()
+            path_label.setText(' > '.join(path))
+        except Exception as e:
+            FreeCAD.Console.PrintMessage(f"Error in sample(): {str(e)}\n")
+
+    timer.timeout.connect(sample)
+
+    def clicked():
+        """Starts or stops the inspection timer based on button state."""
+        if inspect_button.isChecked():
+            timer.start(200)
+        else:
+            timer.stop()
+
+    inspect_button.clicked.connect(clicked)
+
+    return widget
+
+# Add the dock widget to FreeCAD
+window = FreeCADGui.getMainWindow()
+dock = create_dock_widget()
+window.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
