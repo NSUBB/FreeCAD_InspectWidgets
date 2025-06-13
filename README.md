@@ -1,6 +1,8 @@
 ## FreeCAD Inspect Widgets Addon
 Inspect widgets in FreeCAD
 
+This fork aims to simplify installation of the macro by encapsulating the functions of the supporting files directly into the .FCmacro so that a single file can be added to FreeCAD Macros folder and run. This version was tested on Windows 11 installation of FreeCAD v1.0.1.
+
 ![Inspect-Widget-Addon](https://user-images.githubusercontent.com/4140247/107982828-b8b96c00-6f92-11eb-9c38-b7b13330042d.png)
 
 ## Description
